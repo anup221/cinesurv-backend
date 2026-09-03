@@ -12,29 +12,57 @@ This repository contains the **backend service, real-time dashboard, and edge-de
 
 ---
 
+## Screenshots
+
+### Landing Page
+![Cinesurv Landing Page](assets/landing-page.png)
+
+### Live Dashboard & Seat Mapping
+![Live Dashboard](assets/live-dashboard.png)
+
+### Detection in Action
+![Detection Recording](assets/detection-recording.gif)
+
+---
+
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Edge["Edge Device (Raspberry Pi)"]
-        CAM[NoIR Camera] --> P1[Phase 1: OpenCV<br/>Glint Detection]
-        P1 -->|trigger| P2[Phase 2: TFLite<br/>ML Classification]
-        P2 -->|confirmed threat| POST[HTTP POST /api/alerts/log]
-    end
+```
+  EDGE DEVICE (Raspberry Pi)
+  ─────────────────────────────────────────────
+    NoIR Camera
+         │
+         ▼
+    Phase 1 · OpenCV Glint Detection        (runs on every frame — cheap)
+         │
+         │  triggers only on a glint candidate
+         ▼
+    Phase 2 · TFLite ML Classification      (runs only when triggered)
+         │
+         │  confirmed threat
+         ▼
+    HTTP POST  /api/alerts/log
 
-    subgraph Backend["Spring Boot Backend"]
-        POST --> CTRL[AlertController]
-        CTRL --> SVC[AlertService]
-        SVC --> REPO[(AlertRepository<br/>JPA)]
-        SVC --> WS[SimpMessagingTemplate]
-        REPO --> DB[(PostgreSQL / H2)]
-    end
 
-    subgraph Client["Dashboard"]
-        WS -->|STOMP /topic/live-threats| SUB[WebSocket Subscriber]
-        SUB --> UI[Live Seat Map + Alert Feed]
-        CTRL <-->|REST: history, stats, resolve| UI
-    end
+  SPRING BOOT BACKEND
+  ─────────────────────────────────────────────
+    AlertController
+         │
+         ▼
+    AlertService ──────────────┬──────────────────────┐
+         │                     │                       │
+         ▼                     ▼                       ▼
+    AlertRepository      PostgreSQL / H2        SimpMessagingTemplate
+       (JPA)                                            │
+                                                          │  STOMP broadcast
+                                                          ▼
+                                              /topic/live-threats
+
+
+  DASHBOARD (Browser)
+  ─────────────────────────────────────────────
+    WebSocket Subscriber  ───►  Live Seat Map + Real-Time Alert Feed
+    REST calls (history / stats / resolve)  ◄──►  AlertController
 ```
 
 **Why this design:** running ML inference on every video frame is too expensive for constrained edge hardware, so a cheap OpenCV heuristic (Hough Circle Transform on thresholded frames) gates the expensive TensorFlow Lite classification — inference only runs when there's genuinely something to verify. On the backend side, alerts are persisted via Spring Data JPA **and** pushed instantly over WebSocket, so the dashboard updates with zero polling latency.
@@ -150,9 +178,12 @@ Sends realistic mock detections in the exact payload shape the real edge device 
 
 ## Team
 
-Built as a major-project — Department of Electronics and Communication Engineering, RNS Institute of Technology (VTU).
+Built as a Phase I mini-project — Department of Electronics and Communication Engineering, RNS Institute of Technology (VTU).
 
-
+**Guide:** Prof. Ghousia Begum S
 
 ---
 
+## License
+
+MIT
