@@ -183,6 +183,3 @@ Built as a Phase I mini-project — Department of Electronics and Communication 
 
 ---
 
-## License
-
-MIT
