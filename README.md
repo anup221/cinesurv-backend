@@ -20,8 +20,7 @@ This repository contains the **backend service, real-time dashboard, and edge-de
 ### Live Dashboard & Seat Mapping
 ![Live Dashboard](assets/live-dashboard.png)
 
-### Detection in Action
-![Detection Recording](assets/detection-recording.gif)
+
 
 ---
 
